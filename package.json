@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "scripts": {
         "install": "node build/install.js",
-        "test": "node test/template.js"
+        "test": "node test/test.js"
     },
     "devDependencies": {
         "archiver": "^5.1.0",

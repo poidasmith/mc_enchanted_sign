@@ -1,5 +1,32 @@
+/*
+
+MIT License
+
+Copyright (c) 2020 poidasmith
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
 let system = server.registerSystem(0, 0);
 
+// State variables used to track players and placed signs
 var tickCount = 0;
 var playerTemplates = {};
 var block_placed_position = { x: 0, y: 63, z: 0 };
@@ -53,31 +80,6 @@ system.updateTemplate = function(name) {
             });
         }
     });
-};
-
-system.log = function (...items) {
-    const toString = item => {
-        switch (Object.prototype.toString.call(item)) {
-            case '[object Undefined]':
-                return 'undefined';
-            case '[object Null]':
-                return 'null';
-            case '[object String]':
-                return `"${item}"`;
-            case '[object Array]':
-                const array = item.map(toString);
-                return `[${array.join(', ')}]`;
-            case '[object Object]':
-                const object = Object.keys(item).map(key => `${key}: ${toString(item[key])}`);
-                return `{${object.join(', ')}}`;
-            case '[object Function]':
-                return item.toString();
-            default:
-                return item;
-        }
-    }
-
-    this.emit("minecraft:display_chat_event", { message: items.map(toString).join(" ") });
 };
 
 system.logf = function (...message) {
@@ -145,6 +147,10 @@ system.noop = function (ed) {
     //system.log(ed);
 };
 
+system.summon = function (type, x, y, z) {
+    this.executeCommand(this.format("summon {0} {1} {2} {3}", type, x, y, z), system.noop);
+};
+
 system.create = function (type, x, y, z) {
     this.executeCommand(this.format("fill {0} {1} {2} {3} {4} {5} {6}", x, y, z, x, y, z, type), system.noop);
 };
@@ -158,26 +164,32 @@ system.fill2 = function (type, x1, y1, z1, x2, y2, z2, tileData) {
 };
 
 const house = `
-c = cobblestone
-p = planks
-w = log
-g = glass_pane
-s = stone_stairs 2
-h = chest
 _ = air
-t = crafting_table
 b = bed
+c = cobblestone
 d = wooden_door
+g = glass_pane
+h = chest
 l = wooden_slab
-t = torch
+o = torch
+p = planks
+s = stone_stairs 2
+t = crafting_table
+w = log
+v = vine
+2 = carpet 5
+3 = oak_stairs 2
+4 = oak_stairs 1
+5 = carpet
+f = fence
 
     w c c c c c w   w c c c c c w   w c g g g c w   w c c c c c w   w p p p p p w   _ l p p p l _   _ _ _ l _ _ _ 
-    c p p p p p c   c t b h h _ c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
-    c p p p p p c   c _ b _ _ _ c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
-    c p p p p p c   c _ _ _ _ _ c   g _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
-    c p p p p p c   c _ _ _ _ _ c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
-    w c c c c c w   w c c d c c w   w g c d c g w   w c c c c c w   w p p p p p w   _ l p p p l _   _ _ _ l _ _ _ 
-    _ _ s s s _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ t _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _
+    c p p p p p c   c t _ h h _ c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
+    c p p p p p c   c _ b 2 2 3 c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
+    c p p p p p c   c _ 2 2 2 f c   g _ _ _ _ 5 c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
+    c p p p p p c   c _ _ _ _ 4 c   c _ _ _ _ _ c   c _ _ _ _ _ c   p p p p p p p   _ l p p p l _   _ _ _ l _ _ _ 
+    w c c c c c w   w c c d c c w   w g c d c g w   w c c c c c w   w p p g p p w   _ l p p p l _   _ _ _ l _ _ _ 
+    v v s s s _ _   v v _ _ _ _ _   v _ o _ o _ _   v v v _ _ _ _   _ v v _ _ _ _   _ _ v _ _ _ _   _ _ _ _ _ _ _
 `;
 
 const dungeon = `
@@ -255,11 +267,13 @@ p = powered_repeater
 d = dispenser
 l = lava
 f = fence
+4 = $chicken x 4
+
 _ = air
 
    s s s   s r s   s _ s   _ _ _   _ _ _
    s _ s   s s s   s p s   s g s   _ _ _
-   s _ s   s d s   s h s   g _ g   _ f _
+   s _ s   s d s   s h s   g 4 g   _ f _
    s h s   s b s   s l s   s g s   _ _ _
    s c s   s _ s   s g s   s s s   _ _ _
 `;
@@ -267,7 +281,7 @@ _ = air
 const cow_farm = `
 g = grass
 f = fence
-c = cow_spawn_egg
+c = $cow
 t = fence_gate
 _ = air
 
@@ -353,7 +367,7 @@ _ = air
    g r g   _ _ _ 
    g r g   _ _ _ 
 
-!offset 0 -1 -1  
+!offset 0 -1 0  
 `;
 
 const sphere = `
@@ -377,7 +391,56 @@ _ = air
 
 `;
 
+const haystack = `
+h = hay_block
+g = grass
+_ = air
+
+   g g g g g g   _ _ _ _ _ _   _ _ _ _ _ _ 
+   g g g g g g   _ h h h h _   _ h h h h _ 
+   g g g g g g   _ h h h h _   _ _ h h h _ 
+   g g g g g g   _ h h h h _   _ _ h h h _ 
+   g g g g g g   _ _ _ _ _ _   _ _ _ _ _ _ 
+
+!offset 0 -1 -0
+`;
+
+const hayshed = `
+h = hay_block
+g = grass
+_ = air
+f = fence
+s = wooden_slab
+
+g g g g g g   f _ _ _ _ f   f _ _ _ _ f   f _ _ _ _ f   s s s s s s 
+g g g g g g   _ h h h h _   _ h h h h _   _ _ _ _ _ _   s s s s s s 
+g g g g g g   _ h h h h _   _ _ h h h _   _ _ _ _ _ _   s s s s s s 
+g g g g g g   _ h h h h _   _ _ h h h _   _ _ _ _ _ _   s s s s s s 
+g g g g g g   f _ _ _ _ f   f _ _ _ _ f   f _ _ _ _ f   s s s s s s 
+
+!offset 0 -1 -0
+`;
+
+const stairs = `
+1 = oak_stairs 1
+2 = oak_stairs 2
+3 = oak_stairs 3
+4 = oak_stairs 4
+5 = oak_stairs 5
+6 = oak_stairs 6
+7 = oak_stairs 7
+8 = oak_stairs 8
+9 = oak_stairs 9
+0 = oak_stairs 10
+e = oak_stairs 11
+t = oak_stairs 12
+
+   1 2 3 4 5 6 7 8 9 0 e t
+
+`;
+
 const templates = {
+    "stairs": stairs,
     "house": house,
     "dungeon": dungeon,
     "chicken_farm": chicken_farm,
@@ -387,7 +450,9 @@ const templates = {
     "shelter": shelter,
     "road": road,
     "forest": forest,
-    "sphere": sphere
+    "sphere": sphere,
+    "haystack": haystack,
+    "hayshed": hayshed,
 }
 
 system.fillTemplate = function (templateName, position, direction) {
@@ -397,6 +462,9 @@ system.fillTemplate = function (templateName, position, direction) {
     var template = templates[templateName];
     if (typeof (template) == "undefined")
         template = templates["house"];
+
+    // Remove the sign
+    this.create("air", position.x, position.y, position.z);
 
     // Split the template into tokens and layers
     var tokens = {};
@@ -441,30 +509,58 @@ system.fillTemplate = function (templateName, position, direction) {
                     console.log("Missing key:" + key);
                     token = "magenta_glazed_terracotta"; // missing a key, make it stand out
                 }
+                
+                // Check for fill or summon
+                var createFn = this.create.bind(this);
+                if(token.startsWith("$")) {
+                    createFn = this.summon.bind(this);
+                    token = token.substring(1);
+                    
+                    // Check for multiplier
+                    var parts = token.split(" ");
+                    if(parts.length > 1 && parts[1] === "x") { // $chicken x 4
+                        var times = parseInt(parts[2]);
+                        createFn = function(...args) {
+                            for(var i = 0; i < times; i++)
+                                system.summon(...args);
+                        };
+                        token = parts[0];
+                    }
+                } 
+                
+                // Check if we need to rotate the block
+                if(token.indexOf(" ") !== -1 ) {
+                    var parts = token.split(" ");
+                    token = parts[0];
+                    var tileData = parts[1];
+                    if(token.indexOf("stairs") !== -1)
+                        token = system.format("{0} {1}", token, system.rotateStairs(tileData, direction));
+                }
+
                 switch (direction) {
                     case "north":
                         var x = Math.ceil(x0 - (width / 2) + k);
                         var y = y0 + j;
                         var z = z0 + depth - i;
-                        this.create(token, x, y, z);
+                        createFn(token, x, y, z);
                         break;
                     case "south":
                         var x = Math.floor(x0 + (width / 2) - k);
                         var y = y0 + j;
                         var z = z0 - depth + i;
-                        this.create(token, x, y, z);
+                        createFn(token, x, y, z);
                         break;
                     case "east":
                         var z = Math.ceil(z0 - (width / 2) + k);
                         var y = y0 + j;
                         var x = x0 - depth + i;
-                        this.create(token, x, y, z);
+                        createFn(token, x, y, z);
                         break;
                     case "west":
                         var z = Math.floor(z0 + (width / 2) - k);
                         var y = y0 + j;
                         var x = x0 + depth - i;
-                        this.create(token, x, y, z);
+                        createFn(token, x, y, z);
                         break;
                 }
             }
@@ -497,8 +593,14 @@ system.applyOffset = function (position, direction, offset) {
     return { x: x, y: y, z: z };
 };
 
+system.rotateStairs = function (tileData, direction) {
+    return tileData;
+    //const rotation = {"north": 0, "east": 4, "south": 8, "west": 12};
+    //return (parseInt(tileData) + (rotation[direction] || 0 )) % 16;
+};
+
 system.testHouse = function () {
-    this.build({ x: 0, y: 0, z: 0 }, 4, "template:road");
+    this.build({ x: 0, y: 0, z: 0 }, 11, "template:stairs");
 };
 
 // support for testing
