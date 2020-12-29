@@ -2,20 +2,32 @@ var system = client.registerSystem(0,0);
 
 system.initialize = function() {
     this.listenForEvent("minecraft:client_entered_world", (eventData) => this.onNewPlayer(eventData));
-    this.listenForEvent("minecraft:pick_hit_result_changed", (eventData) => this.onPick(eventData));
+    this.registerEventData("EnchantedSign:Player", {});
 };
 
-system.update = function() {
+system.log = function (...items) {
+    const toString = item => {
+        switch (Object.prototype.toString.call(item)) {
+            case '[object Undefined]':
+                return 'undefined';
+            case '[object Null]':
+                return 'null';
+            case '[object String]':
+                return `"${item}"`;
+            case '[object Array]':
+                const array = item.map(toString);
+                return `[${array.join(', ')}]`;
+            case '[object Object]':
+                const object = Object.keys(item).map(key => `${key}: ${toString(item[key])}`);
+                return `{${object.join(', ')}}`;
+            case '[object Function]':
+                return item.toString();
+            default:
+                return item;
+        }
+    }
 
-};
-
-system.shutdown = function() {
-
-
-};
-
-system.log = function(message) {
-    this.emit("minecraft:display_chat_event", {message:message});
+    this.emit('minecraft:display_chat_event', { message: items.map(toString).join(' ') });
 };
 
 system.emit = function(type, data) {
@@ -29,7 +41,4 @@ system.onNewPlayer = function(ed) {
     this.emit("EnchantedSign:Player", {player:ed.data.player});
 };
 
-system.onPick = function(ed) {
-    //this.log("Pick event", ed);
-}
 
