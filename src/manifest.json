@@ -1,0 +1,18 @@
+{
+    "format_version": 2,
+    "header": {
+        "description": "rc:Enchanted Sign",
+        "name": "Enchanged Sign",
+        "uuid": "b0e6f6f5-2a01-47b1-b407-44ef3329be55",
+        "version": [0, 0, 1],
+        "min_engine_version": [1,14,0]
+    },
+    "modules": [
+        {
+            "description": "Enchanged Sign",
+            "type": "client_data",
+            "uuid": "4edc9a12-a287-40e5-ac0b-0d42713d28b9",
+            "version": [0, 0, 1]
+        }
+    ]
+}
