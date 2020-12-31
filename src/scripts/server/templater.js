@@ -28,7 +28,7 @@ let templater = {};
 
 templater.fill = function (templateName, position, direction) {
 
-    system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
+    //system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
 
     var template = templates[templateName];
     if (typeof (template) == "undefined")
@@ -116,8 +116,8 @@ templater.fill = function (templateName, position, direction) {
 
                     // Check for multiplier
                     var parts = token.split(" ");
-                    if (parts.length > 1 && parts[1] === "x") { // $chicken x 4
-                        var times = parseInt(parts[2]);
+                    if (parts.length > 1 && parts[1].startsWith("count")) { // $chicken count:4
+                        var times = parseInt(parts[1].substring(6));
                         createFn = function (...args) {
                             for (var i = 0; i < times; i++)
                                 system.summon(...args);

@@ -46,7 +46,7 @@ system.initialize = function () {
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
     playerTemplates[name] = "house";
-    system.logf("Welcome to {0}", name);
+    //system.logf("Welcome to {0}", name);
 };
 
 /**
@@ -95,7 +95,7 @@ system.updateTemplate = function(playerName) {
 system.onEntityUsed = function (ed) {
     if (ed.data.item_stack.item === "minecraft:oak_sign" && ed.data.use_method == "place") {
         var name = system.getEntityName(ed.data.entity);
-        system.logf("Player {0} place a sign", name);
+        //system.logf("Player {0} place a sign", name);
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
         var state = system.getComponent(block, "minecraft:blockstate");

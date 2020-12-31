@@ -10,7 +10,7 @@ p = unpowered_comparator 2
 d = dispenser 2
 l = lava
 f = fence
-4 = $chicken count:20
+4 = $chicken count:14
 _ = air
 
    s s s   s r s   s s s   s _ s   _ _ _

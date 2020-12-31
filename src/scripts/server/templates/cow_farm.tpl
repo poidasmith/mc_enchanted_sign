@@ -1,3 +1,5 @@
+# A simple pen with 4 cows
+
 g = grass
 f = fence
 c = $cow
