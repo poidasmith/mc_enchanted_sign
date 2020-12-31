@@ -1,7 +1,7 @@
 g = grass
 f = fence
 c = $cow
-t = fence_gate 2
+t = fence_gate 0
 p = red_flower
 _ = air
 

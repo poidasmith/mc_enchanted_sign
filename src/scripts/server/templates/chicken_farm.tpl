@@ -20,4 +20,4 @@ _ = air
    s c s   s _ s   s g s   s s s   _ _ _
 
 > base grass margin:1
-> offset 
+> offset 0 -1 0

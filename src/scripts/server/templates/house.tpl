@@ -1,13 +1,13 @@
 # A village house with bed, double-chest, crafting table
 
 _ = air
-b = bed
+b = bed 0
 c = cobblestone
 d = wooden_door
 g = glass_pane
-h = chest
+h = chest 2
 l = wooden_slab
-o = torch
+o = torch 4
 p = planks
 s = stone_stairs 2
 t = crafting_table
@@ -15,7 +15,7 @@ w = log
 v = vine
 2 = carpet 5
 3 = oak_stairs 2
-4 = oak_stairs 1
+4 = oak_stairs 3
 5 = carpet 3
 f = fence
 
@@ -27,3 +27,4 @@ f = fence
     w c c c c c w   w c c d c c w   w g c d c g w   w c c c c c w   w p p g p p w   _ l p p p l _   _ _ _ l _ _ _ 
     v v s s s _ _   v v _ _ _ _ _   v _ o _ o _ _   v v v _ _ _ _   _ v v _ _ _ _   _ _ v _ _ _ _   _ _ _ _ _ _ _
 
+> base grass margin:1

@@ -99,7 +99,8 @@ system.onEntityUsed = function (ed) {
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
         var state = system.getComponent(block, "minecraft:blockstate");
-        system.build(block_placed_position, state.data.ground_sign_direction, playerTemplates[name] || "house");
+        var direction = templater.directionTextOf(state.data.ground_sign_direction);
+        system.build(block_placed_position, direction, playerTemplates[name] || "house");
     }
 };
 
@@ -116,7 +117,7 @@ system.onBlockPlaced = function (ed) {
 system.build = function (position, direction, type) {
     for (var name in templates) {        
         if (type === "template:" + name || type === name) {
-            templater.fill(name, position, templater.directionTextOf(direction));
+            templater.fill(name, position, direction);
             break;        
         }
     }

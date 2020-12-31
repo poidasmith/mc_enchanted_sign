@@ -37,11 +37,13 @@ templater.fill = function (templateName, position, direction) {
     // Remove the sign
     system.create("air", position.x, position.y, position.z);
 
+
     // Split the template into tokens and layers
     var tokens = {};
     var layers = [];
     var lines = template.split("\n");
     var offset = { x: 0, y: 0, z: 0 };
+    var base = null;
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         if (line.trim().length == 0 || line.startsWith("#")) {
@@ -55,20 +57,45 @@ templater.fill = function (templateName, position, direction) {
             tokens[key] = value;
         } else if (line.startsWith(" ")) {
             layers.push(line.trim().split("   ").map(s => s.split(" ")));
-        } else if (line.startsWith("!offset ")) {
-            var offsets = line.substring(8).trim().split(" ").map(s => parseInt(s));
+        } else if (line.startsWith("> offset ")) {
+            var offsets = line.substring(9).trim().split(" ").map(s => parseInt(s));
             offset.x = offsets[0];
             offset.y = offsets[1];
             offset.z = offsets[2];
+        } else if (line.startsWith("> base ")) {
+            var parts = line.substring(7).trim().split(" ");
+            base = { block: parts[0] };
+            for (var z = 1; z < parts.length; z++) {
+                var prop = parts[z].split(":");
+                base[prop[0]] = prop[1];
+            }
         }
     }
 
-    // Calculate position and size
+    // Calculate staring position and template size
     let updatedPosition = this.applyOffset(position, direction, offset);
     let { x: x0, y: y0, z: z0 } = updatedPosition;
     let depth = layers.length;
     let height = layers[0].length;
     let width = layers[0][0].length;
+
+    // Check for base/foundation layer
+    if (base) {
+        var margin = parseInt(base.margin || "0");
+        switch (direction) {
+            case "north":
+                system.fill(base.block, x0 - Math.ceil(width / 2) - margin, y0 - 1, z0 - margin, x0 + Math.ceil(width / 2) + margin, y0 - 1, z0 + depth + margin);
+                break;
+            case "south":
+                system.fill(base.block, x0 - Math.ceil(width / 2) - margin, y0 - 1, z0 + margin, x0 + Math.ceil(width / 2) + margin, y0 - 1, z0 - depth - margin);
+                break;
+            case "east":
+
+                break;
+            case "west":
+                break;
+        }
+    }
 
     // Loop through layers and fill in tokens
     for (i = 0; i < depth; i++) {
@@ -77,35 +104,43 @@ templater.fill = function (templateName, position, direction) {
                 var key = layers[i][j][k];
                 var token = tokens[key];
                 if (typeof (token) === "undefined") {
-                    template.logf("Missing key {0}", key);
+                    system.logf("Missing key {0}", key);
                     token = "magenta_glazed_terracotta"; // missing a key, make it stand out
                 }
-                
+
                 // Check for fill or summon
                 var createFn = system.create;
-                if(token.startsWith("$")) {
+                if (token.startsWith("$")) {
                     createFn = system.summon;
                     token = token.substring(1);
-                    
+
                     // Check for multiplier
                     var parts = token.split(" ");
-                    if(parts.length > 1 && parts[1] === "x") { // $chicken x 4
+                    if (parts.length > 1 && parts[1] === "x") { // $chicken x 4
                         var times = parseInt(parts[2]);
-                        createFn = function(...args) {
-                            for(var i = 0; i < times; i++)
+                        createFn = function (...args) {
+                            for (var i = 0; i < times; i++)
                                 system.summon(...args);
                         };
                         token = parts[0];
                     }
-                } 
-                
+                }
+
                 // Check if we need to rotate the block
-                if(token.indexOf(" ") !== -1 ) {
+                if (token.indexOf(" ") !== -1) {
                     var parts = token.split(" ");
                     token = parts[0];
-                    var tileData = parts[1];
-                    if(token.indexOf("stairs") !== -1)
+                    var tileData = parts[1] || "2";
+                    if (token.indexOf("stairs") !== -1)
                         token = system.format("{0} {1}", token, templater.rotateStairs(tileData, direction));
+                    else if (token === "bed")
+                        token = system.format("{0} {1}", token, templater.rotateBed(tileData, direction));
+                    else if (token === "chest")
+                        token = system.format("{0} {1}", token, templater.rotateChest(tileData, direction));
+                    else if (token === "torch")
+                        token = system.format("{0} {1}", token, templater.rotateTorch(tileData, direction));
+                    else if (token === "fence_gate")
+                        token = system.format("{0} {1}", token, templater.rotateFence(tileData, direction));
                 }
 
                 switch (direction) {
@@ -183,11 +218,46 @@ templater.applyOffset = function (position, direction, offset) {
 };
 
 /**
- * Rotate stair blocks given an initial tileData
+ * Rotate stair blocks given an initial tileData (stepping toward)
+ * 0 = west
+ * 1 = east
+ * 2 = north
+ * 3 = south
  */
 templater.rotateStairs = function (tileData, direction) {
-    return tileData;
-    //const rotation = {"north": 0, "east": 4, "south": 8, "west": 12};
-    //return (parseInt(tileData) + (rotation[direction] || 0 )) % 16;
+    const rotation = {
+        "2": { "west": "0", "east": "1", "north": "2", "south": "3" },
+        "3": { "west": "1", "east": "0", "north": "3", "south": "2" }
+    };
+    return rotation[tileData][direction] || "2";
 };
+
+templater.rotateBed = function (tileData, direction) {
+    const rotation = {
+        "0": { "west": "1", "east": "3", "south": "2", "north": "0" }
+    };
+    return rotation[tileData][direction] || "2";
+}
+
+templater.rotateChest = function (tileData, direction) {
+    const rotation = {
+        "2": { "west": "4", "east": "5", "south": "3", "north": "2" }
+    };
+    return rotation[tileData][direction] || "2";
+}
+
+templater.rotateTorch = function (tileData, direction) {
+    const rotation = {
+        "4": { "west": "2", "east": "1", "south": "3", "north": "4" }
+    };
+    return rotation[tileData][direction] || "2";
+}
+
+templater.rotateFence = function (tileData, direction) {
+    const rotation = {
+        "0": { "west": "1", "east": "1", "south": "0", "north": "0" },
+        "1": { "west": "0", "east": "0", "south": "1", "north": "1" }
+    };
+    return rotation[tileData][direction] || "0";
+}
 
