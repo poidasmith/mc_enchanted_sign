@@ -5,9 +5,9 @@ Minecraft Bedrock scripting addon that allows for "printing" of structures into 
 
 ![Demo](demo.gif)
 
-Uses a simple templating format for easy definition of structures that can be stamped in any direction
-
 ## Template
+
+The addon uses a simple templating format for easy definition of structures that can be stamped in any direction
 
 <pre>
 # A village house with bed, double-chest, crafting table
