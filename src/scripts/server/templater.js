@@ -83,16 +83,16 @@ templater.fill = function (templateName, position, direction) {
         var margin = parseInt(base.margin || "0");
         switch (direction) {
             case "north":
-                var x1 = x0 - Math.ceil(width / 2) - margin;
-                var x2 = x0 + Math.ceil(width / 2) + margin;
-                var z1 = z0 - margin;
+                var x1 = x0 - Math.floor(width / 2) - margin;
+                var x2 = x0 + Math.floor(width / 2) + margin - 1;
+                var z1 = z0 - margin + 1;
                 var z2 = z0 + depth + margin;
                 system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
                 break;
             case "south":
-                var x1 = x0 - Math.ceil(width / 2) - margin;
-                var x2 = x0 + Math.ceil(width / 2) + margin;
-                var z1 = z0 + margin;
+                var x1 = x0 - Math.floor(width / 2) - margin;
+                var x2 = x0 + Math.floor(width / 2) + margin;
+                var z1 = z0 + margin - 1;
                 var z2 = z0 - depth - margin;
                 system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
                 break;
@@ -264,6 +264,9 @@ templater.rotateChest = function (tileData, direction) {
 
 templater.rotateTorch = function (tileData, direction) {
     const rotation = {
+        "1": { "west": "4", "east": "4", "south": "2", "north": "1" },
+        "2": { "west": "3", "east": "3", "south": "1", "north": "2" },
+        "3": { "west": "1", "east": "2", "south": "4", "north": "3" },
         "4": { "west": "2", "east": "1", "south": "3", "north": "4" }
     };
     return rotation[tileData][direction] || "2";
