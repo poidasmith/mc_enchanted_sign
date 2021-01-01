@@ -28,7 +28,7 @@ let templater = {};
 
 templater.fill = function (templateName, position, direction) {
 
-    //system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
+    system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
 
     var template = templates[templateName];
     if (typeof (template) == "undefined")
@@ -36,7 +36,6 @@ templater.fill = function (templateName, position, direction) {
 
     // Remove the sign
     system.create("air", position.x, position.y, position.z);
-
 
     // Split the template into tokens and layers
     var tokens = {};
@@ -79,20 +78,37 @@ templater.fill = function (templateName, position, direction) {
     let height = layers[0].length;
     let width = layers[0][0].length;
 
-    // Check for base/foundation layer
+    // Fill the base layer if specified
     if (base) {
         var margin = parseInt(base.margin || "0");
         switch (direction) {
             case "north":
-                system.fill(base.block, x0 - Math.ceil(width / 2) - margin, y0 - 1, z0 - margin, x0 + Math.ceil(width / 2) + margin, y0 - 1, z0 + depth + margin);
+                var x1 = x0 - Math.ceil(width / 2) - margin;
+                var x2 = x0 + Math.ceil(width / 2) + margin;
+                var z1 = z0 - margin;
+                var z2 = z0 + depth + margin;
+                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
                 break;
             case "south":
-                system.fill(base.block, x0 - Math.ceil(width / 2) - margin, y0 - 1, z0 + margin, x0 + Math.ceil(width / 2) + margin, y0 - 1, z0 - depth - margin);
+                var x1 = x0 - Math.ceil(width / 2) - margin;
+                var x2 = x0 + Math.ceil(width / 2) + margin;
+                var z1 = z0 + margin;
+                var z2 = z0 - depth - margin;
+                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
                 break;
             case "east":
-
+                var x1 = x0 - depth - margin;
+                var x2 = x0 + margin;
+                var z1 = z0 - Math.floor(width / 2) - margin;
+                var z2 = z0 + Math.floor(width / 2) + margin;
+                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
                 break;
             case "west":
+                var x1 = x0 + depth + margin;
+                var x2 = x0 - margin;
+                var z1 = z0 + Math.floor(width / 2) + margin;
+                var z2 = z0 - Math.floor(width / 2) - margin;
+                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
                 break;
         }
     }
