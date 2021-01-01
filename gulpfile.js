@@ -101,7 +101,16 @@ function installToWorld() {
     return gulp.src("./build/output/**").pipe(gulp.dest(worldFolder))
 }
 
+/**
+ * Watch for changes to code and install
+ */
+function autoInstall() {
+    gulp.watch(["./src/**/*.js", "./src/**/*.tpl"], exports.install);
+}
+
 exports.clean = clean;
 exports.default = gulp.series(buildTemplates, buildGenerated, buildManifest, buildServer, buildClient);
 exports.test = gulp.series(exports.default, test);
-exports.install = gulp.series(exports.test, makePack, installToLocalAddon, installToWorld);
+exports.package = gulp.series(makePack, installToLocalAddon, installToWorld);
+exports.install = gulp.series(exports.test, exports.package);
+exports.watch = autoInstall;
