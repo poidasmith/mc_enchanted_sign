@@ -45,8 +45,7 @@ system.initialize = function () {
  */
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
-    playerTemplates[name] = "church";
-    //system.logf("Welcome to {0}", name);
+    playerTemplates[name] = "help"; // Give the player a default template
 };
 
 /**
@@ -56,37 +55,13 @@ system.update = function () {
     tickCount++;
 
     // Sync tag from players to determine the template to use
-    if (tickCount % 20 === 0) {
-        for(var name in playerTemplates) {       
-            if(!playerTemplates.hasOwnProperty(name))
+    if (tickCount % 10 === 0) {
+        for (var name in playerTemplates) {
+            if (!playerTemplates.hasOwnProperty(name))
                 continue;
             system.updateTemplate(name);
         };
     }
-};
-
-/**
- * Query the tags for the given player and update player template
- */
-system.updateTemplate = function(playerName) {
-    system.executeCommand(system.format("tag {0} list", playerName), function (ed) {
-        var playerTemplate = playerTemplates[playerName] || "air";
-        var msg = ed.data.statusMessage.replace("§a", "").replace("§r", "");
-        var offset = msg.indexOf("tags: "); // Check for tags
-        if (offset !== -1) {
-            playerTemplate = msg.substring(offset + 6).trim();
-            if (playerTemplates[playerName] !== playerTemplate) {
-                system.logf("Template for player {0} updated to {1}", playerName, playerTemplate);
-                playerTemplates[playerName] = playerTemplate;
-            }
-            // Clear the tag once we have grabbed it
-            var cmd = system.format("tag {0} remove {1}", playerName, playerTemplate);
-            //system.log(cmd);
-            system.executeCommand(cmd, function (ed) {
-                //system.log(ed);
-            });
-        }
-    });
 };
 
 /**
@@ -95,7 +70,6 @@ system.updateTemplate = function(playerName) {
 system.onEntityUsed = function (ed) {
     if (ed.data.item_stack.item === "minecraft:oak_sign" && ed.data.use_method == "place") {
         var name = system.getEntityName(ed.data.entity);
-        //system.logf("Player {0} place a sign", name);
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
         var state = system.getComponent(block, "minecraft:blockstate");
@@ -112,13 +86,39 @@ system.onBlockPlaced = function (ed) {
 };
 
 /**
+ * Query the tags for the given player and update player template
+ */
+system.updateTemplate = function (playerName) {
+    system.executeCommand(system.format("tag {0} list", playerName), function (ed) {
+        var playerTemplate = playerTemplates[playerName] || "air";
+        var msg = ed.data.statusMessage.replace("§a", "").replace("§r", "");
+        var offset = msg.indexOf("tags: "); // Check for tags
+        if (offset !== -1) {
+            playerTemplate = msg.substring(offset + 6).trim();
+            if (playerTemplates[playerName] !== playerTemplate) {
+                system.logf("Template for player {0} updated to {1}", playerName, playerTemplate);
+                playerTemplates[playerName] = playerTemplate;
+            }
+            // Clear the tag once we have grabbed it
+            var cmd = system.format("tag {0} remove {1}", playerName, playerTemplate);
+            system.executeCommand(cmd, system.noop);
+        }
+    });
+};
+
+/**
  * Main build function
  */
-system.build = function (position, direction, type) {
-    for (var name in templates) {        
-        if (type === "template:" + name || type === name) {
+system.build = function (position, direction, templateName) {
+
+    // Remove the sign
+    system.create2("air", position);
+
+    // Find the template from 
+    for (var name in templates) {
+        if (templateName === "template:" + name || templateName === name) {
             templater.fill(name, position, direction);
-            break;        
+            break;
         }
     }
 };
@@ -165,6 +165,11 @@ system.create = function (type, x, y, z) {
     system.executeCommand(system.format("fill {0} {1} {2} {3} {4} {5} {6}", x, y, z, x, y, z, type), system.noop);
 };
 
+system.create2 = function (type, pos) {
+    let { x, y, z } = pos;
+    system.executeCommand(system.format("fill {0} {1} {2} {3} {4} {5} {6}", x, y, z, x, y, z, type), system.noop);
+};
+
 system.fill = function (type, x1, y1, z1, x2, y2, z2) {
     system.executeCommand(system.format("fill {0} {1} {2} {3} {4} {5} {6}", x1, y1, z1, x2, y2, z2, type), system.noop);
 };
@@ -173,5 +178,18 @@ system.fill2 = function (type, x1, y1, z1, x2, y2, z2, tileData) {
     system.executeCommand(system.format("fill {0} {1} {2} {3} {4} {5} {6} {7}", x1, y1, z1, x2, y2, z2, type, tileData), system.noop);
 };
 
-if(exports)
+system.findTheSurface = function(position) {
+    let seaLevel = 63;
+
+};
+
+system.getBlockType = function(position) {
+    let block = system.getBlock()
+}
+
+if (exports) {
     exports.system = system;
+    exports.templates = templates;
+    exports.macros = macros;
+    exports.templater = templater;
+}

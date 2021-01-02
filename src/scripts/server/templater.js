@@ -26,92 +26,38 @@ SOFTWARE.
 
 let templater = {};
 
+/**
+ * Get the template for the given template name
+ */
+templater.templateOf = function (templateName) {
+    return template = templater.parse(templates[templateName] || templates["house"]);
+};
+
+/**
+ * Executes fill commands for the given block template
+ */
 templater.fill = function (templateName, position, direction) {
 
     system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
 
-    var template = templates[templateName];
-    if (typeof (template) == "undefined")
-        template = templates["house"];
+    // Get the template
+    const template = templater.templateOf(templateName);
 
-    // Remove the sign
-    system.create("air", position.x, position.y, position.z);
+    // Render the template
+    return templater.fillTemplate(template, position, direction);
+};
 
-    // Split the template into tokens and layers
-    var tokens = {};
-    var layers = [];
-    var lines = template.split("\n");
-    var offset = { x: 0, y: 0, z: 0 };
-    var base = null;
-    for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        if (line.trim().length == 0 || line.startsWith("#")) {
-            continue;
-        }
-        // Look for 
-        if (line.indexOf("=") !== -1) {
-            var parts = line.split("=");
-            var key = parts[0].trim();
-            var value = parts[1].trim();
-            tokens[key] = value;
-        } else if (line.startsWith(" ")) {
-            layers.push(line.trim().split("   ").map(s => s.split(" ")));
-        } else if (line.startsWith("> offset ")) {
-            var offsets = line.substring(9).trim().split(" ").map(s => parseInt(s));
-            offset.x = offsets[0];
-            offset.y = offsets[1];
-            offset.z = offsets[2];
-        } else if (line.startsWith("> base ")) {
-            var parts = line.substring(7).trim().split(" ");
-            base = { block: parts[0] };
-            for (var z = 1; z < parts.length; z++) {
-                var prop = parts[z].split(":");
-                base[prop[0]] = prop[1];
-            }
-        }
-    }
+templater.fillTemplate = function (template, position, direction) {
+
+    let { tokens, layers, depth, height, width, offset } = template;
 
     // Calculate starting position and template size
     let updatedPosition = this.applyOffset(position, direction, offset);
     let { x: x0, y: y0, z: z0 } = updatedPosition;
-    let depth = layers.length;
-    let height = layers[0].length;
-    let width = layers[0][0].length;
 
     // Fill the base layer if specified
-    if (base) {
-        var margin = parseInt(base.margin || "0");
-        switch (direction) {
-            case "north":
-                var x1 = x0 - Math.floor(width / 2) - margin;
-                var x2 = x0 + Math.floor(width / 2) + margin - 1;
-                var z1 = z0 - margin + 1;
-                var z2 = z0 + depth + margin;
-                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
-                break;
-            case "south":
-                var x1 = x0 - Math.floor(width / 2) - margin;
-                var x2 = x0 + Math.floor(width / 2) + margin;
-                var z1 = z0 + margin - 1;
-                var z2 = z0 - depth - margin;
-                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
-                break;
-            case "east":
-                var x1 = x0 - depth - margin;
-                var x2 = x0 + margin;
-                var z1 = z0 - Math.floor(width / 2) - margin;
-                var z2 = z0 + Math.floor(width / 2) + margin;
-                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
-                break;
-            case "west":
-                var x1 = x0 + depth + margin;
-                var x2 = x0 - margin;
-                var z1 = z0 + Math.floor(width / 2) + margin;
-                var z2 = z0 - Math.floor(width / 2) - margin;
-                system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
-                break;
-        }
-    }
+    if (template.base)
+        templater.fillBase(template, updatedPosition, direction);
 
     // Loop through layers and fill in tokens - we loop through twice, placing solid blocks first
     for (var mode of ["solid", "attachments"]) {
@@ -168,6 +114,7 @@ templater.fill = function (templateName, position, direction) {
                             token = system.format("{0} {1}", token, templater.rotateVine(tileData, direction));
                     }
 
+                    // Calculate position of block and fill
                     switch (direction) {
                         case "north":
                             var x = Math.floor(x0 + (width / 2) - k);
@@ -197,6 +144,101 @@ templater.fill = function (templateName, position, direction) {
                 }
             }
         }
+    }
+};
+
+/**
+ * Parse a template string into tokens, layers and properties
+ */
+templater.parse = function (templateStr) {
+
+    // Split the template into tokens and layers
+    var tokens = {};
+    var layers = [];
+    var lines = templateStr.split("\n");
+    var offset = { x: 0, y: 0, z: 0 };
+    var base = null;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        // Check for comment lines
+        if (line.trim().length == 0 || line.startsWith("#")) {
+            continue;
+        }
+        // Look for variables
+        if (line.indexOf("=") !== -1) {
+            var parts = line.split("=");
+            var key = parts[0].trim();
+            var value = parts[1].trim();
+            tokens[key] = value;
+        } else if (line.startsWith(" ")) { // Layers start with at least one space    
+            layers.push(line.trim().split("   ").map(s => s.split(" ")));
+        } else if (line.startsWith("> offset ")) { // Look for offset feature
+            var offsets = line.substring(9).trim().split(" ").map(s => parseInt(s));
+            offset.x = offsets[0];
+            offset.y = offsets[1];
+            offset.z = offsets[2];
+        } else if (line.startsWith("> base ")) { // Look for base (foundation layer) feature
+            var parts = line.substring(7).trim().split(" ");
+            base = { block: parts[0] };
+            for (var z = 1; z < parts.length; z++) {
+                var prop = parts[z].split(":");
+                base[prop[0]] = prop[1];
+            }
+        }
+    }
+
+    // Calculate dimensions
+    let depth = layers.length;
+    let height = layers[0].length;
+    let width = layers[0][0].length;
+
+    return {
+        tokens,
+        layers,
+        depth,
+        height,
+        width,
+        offset,
+        base
+    };
+};
+
+/**
+ * Fill the base (foundation layer) with specified block
+ */
+templater.fillBase = function (template, position, direction) {  
+    let { base, width, depth } = template;
+    let { x0, y0, z0 } = position;
+    var margin = parseInt(base.margin || "0");
+    switch (direction) {
+        case "north":
+            var x1 = x0 - Math.floor(width / 2) - margin;
+            var x2 = x0 + Math.floor(width / 2) + margin - 1;
+            var z1 = z0 - margin + 1;
+            var z2 = z0 + depth + margin;
+            system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
+            break;
+        case "south":
+            var x1 = x0 - Math.floor(width / 2) - margin;
+            var x2 = x0 + Math.floor(width / 2) + margin;
+            var z1 = z0 + margin - 1;
+            var z2 = z0 - depth - margin;
+            system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2);
+            break;
+        case "east":
+            var x1 = x0 - depth - margin;
+            var x2 = x0 + margin;
+            var z1 = z0 - Math.floor(width / 2) - margin;
+            var z2 = z0 + Math.floor(width / 2) + margin;
+            system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
+            break;
+        case "west":
+            var x1 = x0 + depth + margin;
+            var x2 = x0 - margin;
+            var z1 = z0 + Math.floor(width / 2) + margin;
+            var z2 = z0 - Math.floor(width / 2) - margin;
+            system.fill(base.block, x1, y0 - 1, z1, x2, y0 - 1, z2)
+            break;
     }
 };
 
@@ -254,13 +296,8 @@ templater.applyOffset = function (position, direction, offset) {
     return { x: x, y: y, z: z };
 };
 
-/**
- * Rotate stair blocks given an initial tileData (stepping toward)
- * 0 = west
- * 1 = east
- * 2 = north
- * 3 = south
- */
+// ==== Rotation Helpers ==============================
+
 templater.rotateStairs = function (tileData, direction) {
     const rotation = {
         "0": { "west": "2", "east": "3", "north": "0", "south": "1" },

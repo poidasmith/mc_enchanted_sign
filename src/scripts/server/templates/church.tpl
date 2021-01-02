@@ -5,6 +5,7 @@ m = mossy_cobblestone
 f = cobblestone_wall
 t = torch
 g = grass
+p = grass_path
 w = glass_pane
 l = ladder
 0 = stone_stairs 0
@@ -23,6 +24,6 @@ _ = air
    c c c c c c c   c c c 2 c c c   c _ _ _ _ _ c   w _ _ _ _ _ w   w _ _ _ _ _ w   c _ _ _ _ _ c   _ c c c c c _   _ c _ _ _ c _   _ w _ _ _ w _   _ w _ _ _ w _   _ c c c c c _   _ c _ _ _ c _   _ m _ _ _ c _
    c c c c c c c   c c c _ c c c   c c _ _ _ c c   c 0 _ _ _ 1 c   c _ _ _ _ _ c   c _ _ _ _ _ c   _ c c c c c _   _ c _ _ _ c _   _ c _ _ _ c _   _ c _ _ _ c _   _ c c c c c _   _ c _ _ _ c _   _ _ _ _ _ _ _
    g c c c c c g   _ c c d c c _   _ c c d c c _   _ c c c c c _   _ c c w c c _   _ c c w c c _   _ _ c c c _ _   _ _ c c c _ _   _ _ c w c _ _   _ _ c w c _ _   _ c c c c c _   _ _ c c c _ _   _ _ _ c _ _ _
-   g c g g g c g   _ c _ _ _ c _   _ f _ _ _ f _   _ t _ _ _ t _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _
+   g c g p g c g   _ c _ _ _ c _   _ f _ _ _ f _   _ t _ _ _ t _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _
 
 > offset 0 -1 0

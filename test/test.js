@@ -24,8 +24,16 @@ server = {
     }
 };
 
-const { system } = require("../build/output/scripts/server/server");
+const { system, templates, macros, templater } = require("../build/output/scripts/server/server");
+
+//console.log(templates);
 
 system.initialize();
-system.build({ x: 0, y: 0, z: 0 }, "south", "template:church");
+const origin = { x: 0, y: 0, z: 0 };
+
+//system.build(origin, "south", "template:lamp");
+
+var well = templater.parse(templates.well);
+console.log(well);
+templater.fillTemplate(well, origin, "south");
 

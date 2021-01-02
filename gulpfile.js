@@ -36,19 +36,34 @@ function buildTemplates() {
         .pipe(gulp.dest("./build/generated/scripts/server"));
 };
 
-function buildGenerated() {
-    return gulp.src("./src/**/*.js").pipe(gulp.dest("./build/generated"));
+/**
+ * Grab all the .tpl files in the macros folder and concatenate into a map of name -> contents
+ */
+function buildMacros() {
+    return gulp.src("./src/scripts/server/macros/**.tpl")
+        .pipe(transform("utf8", function (content, file) {
+            var fileName = path.basename(file.path);
+            var templateName = fileName.substring(0, fileName.length - 4);
+            return "macros." + templateName + " = `\n" + String(content) + "`;\n";
+        }))
+        .pipe(concat("macros.js"))
+        .pipe(header("let macros = {};\n\n"))
+        .pipe(footer("\n"))
+        .pipe(gulp.dest("./build/generated/scripts/server"));
 };
 
 /**
  * Glue the server, templater and templates into a single file
  */
 function buildServer() {
-    return gulp.src([
+    // Concatenate in order of dependency
+    var files = [
         "./build/generated/scripts/server/templates.js",
-        "./build/generated/scripts/server/templater.js",
-        "./build/generated/scripts/server/server.js",
-    ])
+        "./build/generated/scripts/server/macros.js",
+        "./src/scripts/server/templater.js",
+        "./src/scripts/server/server.js",
+    ];
+    return gulp.src(files)
         .pipe(concat("server.js"))
         .pipe(gulp.dest("./build/output/scripts/server/"));
 }
@@ -57,13 +72,13 @@ function buildServer() {
  * Build the client script
  */
 function buildClient() {
-    return gulp.src("./build/generated/scripts/client/client.js").pipe(gulp.dest("./build/output/scripts/client/"));
+    return gulp.src("./src/scripts/client/client.js").pipe(gulp.dest("./build/output/scripts/client/"));
 }
 
 /**
  * Copy the manifest files into the output folder
  */
-function buildManifest(cb) {
+function buildManifest() {
     return gulp.src([
         "./src/manifest.json",
         "./src/pack_icon.png"
@@ -109,7 +124,7 @@ function autoInstall() {
 }
 
 exports.clean = clean;
-exports.default = gulp.series(buildTemplates, buildGenerated, buildManifest, buildServer, buildClient);
+exports.default = gulp.series(buildTemplates, buildMacros, buildManifest, buildServer, buildClient);
 exports.test = gulp.series(exports.default, test);
 exports.package = gulp.series(makePack, installToLocalAddon, installToWorld);
 exports.install = gulp.series(exports.test, exports.package);
