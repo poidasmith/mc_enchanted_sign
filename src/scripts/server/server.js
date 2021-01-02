@@ -45,7 +45,7 @@ system.initialize = function () {
  */
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
-    playerTemplates[name] = "house";
+    playerTemplates[name] = "church";
     //system.logf("Welcome to {0}", name);
 };
 

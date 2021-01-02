@@ -27,5 +27,5 @@ server = {
 const { system } = require("../build/output/scripts/server/server");
 
 system.initialize();
-system.build({ x: 0, y: 0, z: 0 }, "south", "template:house3");
+system.build({ x: 0, y: 0, z: 0 }, "south", "template:church");
 
