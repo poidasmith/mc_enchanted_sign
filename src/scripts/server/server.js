@@ -47,7 +47,7 @@ system.initialize = function () {
  */
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
-    playerTemplates[name] = "help"; // Give the player a default template
+    playerTemplates[name] = "macro:test1"; // Give the player a default template
 };
 
 /**
@@ -74,7 +74,7 @@ system.onEntityUsed = function (ed) {
         var name = system.getEntityName(ed.data.entity);
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
-        var state = system.getComponent(block, "minecraft:blockstate");        
+        var state = system.getComponent(block, "minecraft:blockstate");
         var direction = templater.directionOfSign(state);
         system.build(block_placed_position, direction, playerTemplates[name] || "help");
     }
@@ -116,19 +116,22 @@ system.build = function (position, direction, templateName) {
     // Remove the sign
     system.create2("air", position);
 
-    // Find the template from 
-    for (var name in templates) {
-        if (templateName === "template:" + name || templateName === name) {
-            templater.fill(name, position, direction);
-            break;
-        }
+    // Find the template from the tag
+    if (templateName.startsWith("template:")) {
+        templateName = templateName.substring(9);
+        templater.fill(templateName, position, direction);
+    } else if (templateName.startsWith("macro:")) {
+        macroName = templateName.substring(6);
+        templater.macro(macroName, position, direction);
+    } else {
+        templater.fill(templateName, position, direction); // Fallback to assume name is just the template
     }
 };
 
 // =============== HELPERS =======================================
 
-system.setupLogging = function() {
-    system.emit("minecraft:script_logger_config", {log_errors:true, log_information:true, log_warnings:true});
+system.setupLogging = function () {
+    system.emit("minecraft:script_logger_config", { log_errors: true, log_information: true, log_warnings: true });
 };
 
 system.logf = function (...message) {
@@ -184,12 +187,12 @@ system.fill2 = function (type, x1, y1, z1, x2, y2, z2, tileData) {
     system.executeCommand(system.format("fill {0} {1} {2} {3} {4} {5} {6} {7}", x1, y1, z1, x2, y2, z2, type, tileData), system.noop);
 };
 
-system.findTheSurface = function(position) {
+system.findTheSurface = function (position) {
     let seaLevel = 63;
 
 };
 
-system.getBlockType = function(position) {
+system.getBlockType = function (position) {
     //let block = system.getBlock();
 };
 

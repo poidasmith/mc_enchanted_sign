@@ -1,14 +1,15 @@
 # creates a village from templates
 
-1 = house east
-2 = house west
+1 = house west
+2 = house east
 3 = house north
-4 = house south
-f = forest north
-t = forest east
-c = church 
+f = forest west
+c = church east
 s = shelter2
 o = cow_farm
+r = road
+p = patch west
+w = well
 _ = air
    
    _ _ 3 _ _ _

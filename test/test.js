@@ -41,5 +41,6 @@ templater.fillTemplate(well, origin, "south");
 console.log(templater.directionOfSign({data:{facing_direction:2}}));
 */
 
-var village = templater.macroOf("village");
-console.log(village);
+console.log(templater.parse(macros.test1).layers[0][0]);
+
+system.build(origin, "north", "macro:test1");

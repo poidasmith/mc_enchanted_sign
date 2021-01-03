@@ -51,7 +51,7 @@ templater.fill = function (templateName, position, direction) {
     const template = templater.templateOf(templateName);
 
     // Render the template
-    return templater.fillTemplate(template, position, direction);
+    templater.fillTemplate(template, position, direction);
 };
 
 /**
@@ -59,13 +59,13 @@ templater.fill = function (templateName, position, direction) {
  */
 templater.macro = function (macroName, position, direction) {
 
-    system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
+    system.logf("Generating macro '{0}' at {1} with direction {2}", macroName, JSON.stringify(position), direction);
 
     // Get the macro
     const template = templater.macroOf(macroName);
 
     // Render the macro
-    return templaters.fillMacro(template, position, direction);
+    templater.fillMacro(template, position, direction);
 };
 
 /**
@@ -85,12 +85,12 @@ templater.fillTemplate = function (template, position, direction) {
 
     // Loop through layers and fill in tokens - we loop through twice, placing solid blocks first
     for (var mode of ["solid", "attachments"]) {
-        for (i = 0; i < depth; i++) {
-            for (j = 0; j < height; j++) {
-                for (k = 0; k < width; k++) {
+        for (var i = 0; i < depth; i++) {
+            for (var j = 0; j < height; j++) {
+                for (var k = 0; k < width; k++) {
                     var key = layers[i][j][k];
                     var token = tokens[key];
-                    if (typeof (token) === "undefined") {
+                    if (typeof token === "undefined") {
                         system.logf("Missing key {0}", key);
                         token = "magenta_glazed_terracotta"; // missing a key, make it stand out
                     }
@@ -176,14 +176,66 @@ templater.fillTemplate = function (template, position, direction) {
  */
 templater.fillMacro = function (template, position, direction) {
 
-    let { tokens, layers, depth, height, width, grid, terrain } = template;
+    let { tokens, layers, offset, depth, height, width, grid, terrain } = template;
 
     // Calculate starting position and template size
     let updatedPosition = this.applyOffset(position, direction, offset);
     let { x: x0, y: y0, z: z0 } = updatedPosition;
 
+    var spacing = grid ? parseInt(grid.spacing || "10") : 10;
 
+    for (var i = 0; i < depth; i++) {
+        var ix = i * spacing;
+        for (var j = 0; j < height; j++) {
+            for (var k = 0; k < width; k++) {
+                var kx = k * spacing;
+                var key = layers[i][j][k];
+                var token = tokens[key];
 
+                if (typeof token === "undefined") {
+                    system.logf("Missing key {0}", key);
+                    token = "question"; // missing a key, make it stand out
+                }
+
+                var templateDir = templater.rotateDirection(direction, "north");
+                var tparts = token.split(" ");
+                if (tparts.length > 1) {
+                    token = tparts[0];
+                    templateDir = templater.rotateDirection(direction, tparts[1]);
+                }
+
+                // Calculate position of template
+                var templatePos = {};
+                switch (direction) {
+                    case "north":
+                        templatePos.x = Math.floor(x0 + (width / 2) - kx);
+                        templatePos.y = y0 + j;
+                        templatePos.z = z0 + depth - ix;
+                        break;
+                    case "south":
+                        templatePos.x = Math.ceil(x0 - (width / 2) + kx);
+                        templatePos.y = y0 + j;
+                        templatePos.z = z0 - depth + ix;
+                        break;
+                    case "east":
+                        templatePos.z = Math.ceil(z0 - (width / 2) + kx);
+                        templatePos.y = y0 + j;
+                        templatePos.x = x0 - depth + ix;
+                        break;
+                    case "west":
+                        templatePos.z = Math.floor(z0 + (width / 2) - kx);
+                        templatePos.y = y0 + j;
+                        templatePos.x = x0 + depth - ix;
+                        break;
+                };
+
+                // TODO: support for following terrain; find the surface for given templatePos and use that
+
+                // Fill the template for the given position and direction
+                templater.fill(token, templatePos, templateDir);
+            }
+        }
+    }
 };
 
 /**
@@ -223,7 +275,7 @@ templater.parse = function (templateStr) {
             base = props;
         } else if (line.startsWith("> grid")) { // Look for grid settings (for macros only)
             let { props } = templater.parseSetting(line);
-            grid = props;            
+            grid = props;
         } else if (line.startsWith("> terrain")) { // Look for terrain settings (for macros only)
             let { props } = templater.parseSetting(line);
             terrain = props;
@@ -269,7 +321,7 @@ templater.parseSetting = function (line) {
  */
 templater.fillBase = function (template, position, direction) {
     let { base, width, depth } = template;
-    let { x:x0, y:y0, z:z0 } = position;
+    let { x: x0, y: y0, z: z0 } = position;
     var margin = parseInt(base.margin || "0");
     switch (direction) {
         case "north":
@@ -376,6 +428,16 @@ templater.applyOffset = function (position, direction, offset) {
 };
 
 // ==== Rotation Helpers ==============================
+
+templater.rotateDirection = function (referenceDir, direction) {
+    const rotation = {
+        "north": { "west": "west", "east": "east", "north": "north", "south": "south" },
+        "south": { "west": "east", "east": "west", "north": "south", "south": "north" },
+        "east": { "west": "south", "east": "north", "north": "west", "south": "east" },
+        "west": { "west": "north", "east": "south", "north": "east", "south": "west" }
+    };
+    return rotation[referenceDir][direction];
+};
 
 templater.rotateStairs = function (tileData, direction) {
     const rotation = {
