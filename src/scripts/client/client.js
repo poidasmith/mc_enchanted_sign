@@ -27,18 +27,27 @@ SOFTWARE.
 var system = client.registerSystem(0,0);
 
 system.initialize = function() {
-    this.listenForEvent("minecraft:client_entered_world", (eventData) => this.onNewPlayer(eventData));
-    this.registerEventData("EnchantedSign:Player", {});
+    system.setupLogging();
+    system.registerEventData("EnchantedSign:Player", {});
+    system.listenForEvent("minecraft:client_entered_world", (eventData) => this.onNewPlayer(eventData));
 };
 
 system.emit = function(type, data) {
     let ed = this.createEventData(type);
     ed.data = data;
-    this.broadcastEvent(type, ed);
+    system.broadcastEvent(type, ed);
+};
+
+system.logf = function (message) {
+    system.emit("minecraft:display_chat_event", { message: message });
+};
+
+system.setupLogging = function() {
+    system.emit("minecraft:script_logger_config", {log_errors:true, log_information:true, log_warnings:true});
 };
 
 system.onNewPlayer = function(ed) {
-    this.emit("EnchantedSign:Player", {player:ed.data.player});
+    system.emit("EnchantedSign:Player", {player:ed.data.player});
 };
 
 

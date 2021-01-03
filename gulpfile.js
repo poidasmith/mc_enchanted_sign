@@ -1,17 +1,17 @@
-var gulp = require("gulp");
-var data = require("gulp-data");
-var transform = require("gulp-transform");
-var header = require("gulp-header");
-var footer = require("gulp-footer");
-var concat = require("gulp-concat");
-var log = require("fancy-log");
-var path = require("path");
-var del = require("del");
-var zip = require("gulp-zip");
-var os = require("os");
+const gulp = require("gulp");
+const transform = require("gulp-transform");
+const header = require("gulp-header");
+const footer = require("gulp-footer");
+const concat = require("gulp-concat");
+const path = require("path");
+const del = require("del");
+const zip = require("gulp-zip");
+const os = require("os");
+const log = require("fancy-log");
+const glob = require("glob");
 
-var username = os.userInfo().username;
-var minecraftFolder = "C:\\Users\\" + username + "\\AppData\\Local\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang";
+const username = os.userInfo().username;
+const minecraftFolder = "C:\\Users\\" + username + "\\AppData\\Local\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang";
 
 /**
  * Clean the build folder
@@ -109,11 +109,15 @@ function installToLocalAddon() {
 }
 
 /**
- * Copy the addon into the folder of our test world for quick updating
+ * Copy the addon into the folder of worlds with this addon already enabled
  */
-function installToWorld() {
-    var worldFolder = minecraftFolder + "\\minecraftWorlds\\TOnoXzYiGAA=\\behavior_packs\\EnchangedS";
-    return gulp.src("./build/output/**").pipe(gulp.dest(worldFolder))
+function installToWorlds() {
+    const worldsWithAddon = glob.sync(minecraftFolder + "\\minecraftWorlds\\**\\behavior_packs\\EnchangedS");
+    var stream = gulp.src("./build/output/**");
+    worldsWithAddon.forEach(function(folder) {
+        stream = stream.pipe(gulp.dest(folder));
+    });
+    return stream;
 }
 
 /**
@@ -126,6 +130,7 @@ function autoInstall() {
 exports.clean = clean;
 exports.default = gulp.series(buildTemplates, buildMacros, buildManifest, buildServer, buildClient);
 exports.test = gulp.series(exports.default, test);
-exports.package = gulp.series(makePack, installToLocalAddon, installToWorld);
+exports.package = gulp.series(makePack, installToLocalAddon, installToWorlds);
 exports.install = gulp.series(exports.test, exports.package);
+exports.worlds = installToWorlds;
 exports.watch = autoInstall;

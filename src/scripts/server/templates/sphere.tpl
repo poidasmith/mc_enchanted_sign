@@ -1,7 +1,7 @@
 # A spherical wooden house
 
 p = planks
-l = lantern 1
+l = lantern 5
 f = fence
 g = glass
 _ = air

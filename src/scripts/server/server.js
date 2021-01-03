@@ -32,12 +32,14 @@ var playerTemplates = {}; // Each player can specify a template to use
 var block_placed_position = { x: 0, y: 63, z: 0 };
 
 system.initialize = function () {
-    // Listen for new players joining
-    system.listenForEvent("EnchantedSign:Player", (eventData) => this.onPlayer(eventData));
+    // Setup verbose logging
+    system.setupLogging();
     // Listen for players placing blocks so we can capture the block position of the sign
     system.listenForEvent("minecraft:player_placed_block", (eventData) => this.onBlockPlaced(eventData));
     // Listen for players using items so we can detect when they place a a sign
     system.listenForEvent("minecraft:entity_use_item", (eventData) => this.onEntityUsed(eventData));
+    // Listen for new players joining
+    system.listenForEvent("EnchantedSign:Player", (eventData) => this.onPlayer(eventData));
 };
 
 /**
@@ -46,6 +48,7 @@ system.initialize = function () {
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
     playerTemplates[name] = "help"; // Give the player a default template
+    system.logf("Player {0} joined", name);
 };
 
 /**
@@ -69,6 +72,7 @@ system.update = function () {
  */
 system.onEntityUsed = function (ed) {
     if (ed.data.item_stack.item === "minecraft:oak_sign" && ed.data.use_method == "place") {
+        system.logf("Player used a sign");
         var name = system.getEntityName(ed.data.entity);
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
@@ -82,6 +86,7 @@ system.onEntityUsed = function (ed) {
  * Callback when a block is placed - we use this to track the sign position 
  */
 system.onBlockPlaced = function (ed) {
+    system.logf("Block is placed {0}", ed);
     block_placed_position = ed.data.block_position;
 };
 
@@ -124,6 +129,10 @@ system.build = function (position, direction, templateName) {
 };
 
 // =============== HELPERS =======================================
+
+system.setupLogging = function() {
+    system.emit("minecraft:script_logger_config", {log_errors:true, log_information:true, log_warnings:true});
+};
 
 system.logf = function (...message) {
     system.emit("minecraft:display_chat_event", { message: system.format(...message) });
@@ -184,10 +193,10 @@ system.findTheSurface = function(position) {
 };
 
 system.getBlockType = function(position) {
-    let block = system.getBlock()
-}
+    //let block = system.getBlock();
+};
 
-if (exports) {
+if (typeof exports === "object") {
     exports.system = system;
     exports.templates = templates;
     exports.macros = macros;
