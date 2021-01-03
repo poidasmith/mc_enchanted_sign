@@ -31,9 +31,15 @@ const { system, templates, macros, templater } = require("../build/output/script
 system.initialize();
 const origin = { x: 0, y: 0, z: 0 };
 
-//system.build(origin, "south", "template:lamp");
+/*
+system.build(origin, "south", "template:lamp");
 
 var well = templater.parse(templates.well);
 console.log(well);
 templater.fillTemplate(well, origin, "south");
 
+console.log(templater.directionOfSign({data:{facing_direction:2}}));
+*/
+
+var village = templater.macroOf("village");
+console.log(village);

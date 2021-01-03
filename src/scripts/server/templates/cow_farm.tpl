@@ -16,4 +16,4 @@ _ = air
    f _ _ _ _ _ f
    f f f t f f f
 
-> base grass margin:1
+> base block:grass margin:1

@@ -12,4 +12,4 @@ b = bell
    c c c c c c   _ c c c m _   _ f _ _ f _   _ f _ b f _   _ c c c c _ 
    c c c c c c   _ _ _ _ _ _   _ _ _ _ _ _   _ _ _ _ _ _   _ _ _ _ _ _   
 
-> base grass_path margin:1
+> base block:grass_path margin:1

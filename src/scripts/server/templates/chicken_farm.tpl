@@ -19,5 +19,5 @@ _ = air
    s h s   s b s   s l s   s g s   _ _ _
    s c s   s _ s   s g s   s s s   _ _ _
 
-> base grass margin:1
+> base block:grass margin:1
 > offset 0 -1 0

@@ -31,4 +31,4 @@ _ = air
    l d d w d d w d d l   _ p c _ c c _ c c _
    l l l l l l l l l l   _ _ _ _ _ _ _ _ _ _ 
 
-> base grass margin:1
+> base block:grass margin:1

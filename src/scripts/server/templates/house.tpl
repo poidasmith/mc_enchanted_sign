@@ -27,4 +27,4 @@ f = fence
     w c c c c c w   w c c d c c w   w g c d c g w   w c c c c c w   w p p g p p w   _ l p p p l _   _ _ _ l _ _ _ 
     v v s s s _ _   v v _ _ _ _ _   v _ o _ o _ _   v v v _ _ _ _   _ v v _ _ _ _   _ _ v _ _ _ _   _ _ _ _ _ _ _
 
-> base grass margin:1
+> base block:grass margin:1

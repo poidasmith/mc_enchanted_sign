@@ -10,4 +10,4 @@ _ = air
    _ f _   _ f _   _ f _   2 l 1
    _ _ _   _ _ _   _ _ _   _ 4 _
 
-> base grass_path   
+> base block:grass_path   

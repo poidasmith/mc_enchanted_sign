@@ -1,3 +1,4 @@
+const fs = require("fs");
 const gulp = require("gulp");
 const transform = require("gulp-transform");
 const header = require("gulp-header");
@@ -104,6 +105,7 @@ function makePack() {
  * Copy the addon to the install addon dir for quick updating
  */
 function installToLocalAddon() {
+    log("Updating local addon installation");
     var addonFolder = minecraftFolder + "\\behavior_packs\\EnchangedS";
     return gulp.src("./build/output/**").pipe(gulp.dest(addonFolder))
 }
@@ -115,6 +117,8 @@ function installToWorlds() {
     const worldsWithAddon = glob.sync(minecraftFolder + "\\minecraftWorlds\\**\\behavior_packs\\EnchangedS");
     var stream = gulp.src("./build/output/**");
     worldsWithAddon.forEach(function(folder) {
+        var worldName = fs.readFileSync(path.join(folder, "..", "..", "levelname.txt"), "utf8");
+        log("Updating local world", worldName);
         stream = stream.pipe(gulp.dest(folder));
     });
     return stream;
@@ -127,6 +131,13 @@ function autoInstall() {
     gulp.watch(["./src/**/*.js", "./src/**/*.tpl"], exports.install);
 }
 
+/**
+ * Watch for changes to code and run test
+ */
+function autoTest() {
+    gulp.watch(["./src/**/*.js", "./test/**/*.js", "./src/**/*.tpl"], exports.test);
+}
+
 exports.clean = clean;
 exports.default = gulp.series(buildTemplates, buildMacros, buildManifest, buildServer, buildClient);
 exports.test = gulp.series(exports.default, test);
@@ -134,3 +145,4 @@ exports.package = gulp.series(makePack, installToLocalAddon, installToWorlds);
 exports.install = gulp.series(exports.test, exports.package);
 exports.worlds = installToWorlds;
 exports.watch = autoInstall;
+exports.testWatch = autoTest;

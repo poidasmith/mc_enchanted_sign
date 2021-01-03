@@ -48,7 +48,6 @@ system.initialize = function () {
 system.onPlayer = function (ed) {
     var name = this.getEntityName(ed.data.player);
     playerTemplates[name] = "help"; // Give the player a default template
-    system.logf("Player {0} joined", name);
 };
 
 /**
@@ -72,13 +71,12 @@ system.update = function () {
  */
 system.onEntityUsed = function (ed) {
     if (ed.data.item_stack.item === "minecraft:oak_sign" && ed.data.use_method == "place") {
-        system.logf("Player used a sign");
         var name = system.getEntityName(ed.data.entity);
         var world = system.getComponent(ed.data.entity, "minecraft:tick_world");
         var block = system.getBlock(world.data.ticking_area, block_placed_position);
-        var state = system.getComponent(block, "minecraft:blockstate");
-        var direction = templater.directionTextOf(state.data.ground_sign_direction);
-        system.build(block_placed_position, direction, playerTemplates[name] || "house");
+        var state = system.getComponent(block, "minecraft:blockstate");        
+        var direction = templater.directionOfSign(state);
+        system.build(block_placed_position, direction, playerTemplates[name] || "help");
     }
 };
 
@@ -86,7 +84,6 @@ system.onEntityUsed = function (ed) {
  * Callback when a block is placed - we use this to track the sign position 
  */
 system.onBlockPlaced = function (ed) {
-    system.logf("Block is placed {0}", ed);
     block_placed_position = ed.data.block_position;
 };
 

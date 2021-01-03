@@ -19,7 +19,7 @@ _ = air
    p _ r _ _ _
 
 # cell is 10x10 space
-> grid 10  
+> grid spacing:10  
 
 # we follow the terrain (find first non-air block at each grid point)
 > terrain follow:true

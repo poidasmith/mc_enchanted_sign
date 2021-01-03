@@ -17,4 +17,4 @@ _ = air
    c c c c c   f _ _ _ f   f _ _ _ f   f _ _ _ f   c c c m c   b b b b b
    _ s s s _   _ _ _ _ _   _ _ _ _ _   _ _ _ _ _   _ _ _ _ _   _ _ _ _ _
 
-> base grass margin:1   
+> base block:grass margin:1   

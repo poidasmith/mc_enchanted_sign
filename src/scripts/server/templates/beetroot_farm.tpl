@@ -16,4 +16,4 @@ t = lantern 1
    l d d d d d l   _ b b b b b _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _
    w l s l s l w   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _
 
-> base grass margin:1
+> base block:grass margin:1

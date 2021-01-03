@@ -23,4 +23,4 @@ _ = air
    _ l c m c l _   _ l c d c l _   _ l c d c l _   _ l c c m l _   1 p p p p p 4   _ 2 2 2 2 2 _   _ _ _ _ _ _ _
    _ _ _ 2 _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   _ _ _ _ _ _ _   2 2 2 2 2 2 2   _ _ _ _ _ _ _   _ _ _ _ _ _ _
 
-> base grass   
+> base block:grass   

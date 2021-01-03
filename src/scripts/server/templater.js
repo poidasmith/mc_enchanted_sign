@@ -30,7 +30,14 @@ let templater = {};
  * Get the template for the given template name
  */
 templater.templateOf = function (templateName) {
-    return template = templater.parse(templates[templateName] || templates["house"]);
+    return templater.parse(templates[templateName] || templates["help"]);
+};
+
+/**
+ * Get the macro for the given macro name
+ */
+templater.macroOf = function (macroName) {
+    return templater.parse(macros[macroName]);
 };
 
 /**
@@ -47,6 +54,23 @@ templater.fill = function (templateName, position, direction) {
     return templater.fillTemplate(template, position, direction);
 };
 
+/**
+ * Executes a macro
+ */
+templater.macro = function (macroName, position, direction) {
+
+    system.logf("Generating template '{0}' at {1} with direction {2}", templateName, JSON.stringify(position), direction);
+
+    // Get the macro
+    const template = templater.macroOf(macroName);
+
+    // Render the macro
+    return templaters.fillMacro(template, position, direction);
+};
+
+/**
+ * Iterate through the template layers and fill blocks for the given position and direction
+ */
 templater.fillTemplate = function (template, position, direction) {
 
     let { tokens, layers, depth, height, width, offset } = template;
@@ -148,6 +172,21 @@ templater.fillTemplate = function (template, position, direction) {
 };
 
 /**
+ * Loop through the grid and fill templates according to the macro grid
+ */
+templater.fillMacro = function (template, position, direction) {
+
+    let { tokens, layers, depth, height, width, grid, terrain } = template;
+
+    // Calculate starting position and template size
+    let updatedPosition = this.applyOffset(position, direction, offset);
+    let { x: x0, y: y0, z: z0 } = updatedPosition;
+
+
+
+};
+
+/**
  * Parse a template string into tokens, layers and properties
  */
 templater.parse = function (templateStr) {
@@ -158,6 +197,8 @@ templater.parse = function (templateStr) {
     var lines = templateStr.split("\n");
     var offset = { x: 0, y: 0, z: 0 };
     var base = null;
+    var grid = null;
+    var terrain = null;
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         // Check for comment lines
@@ -178,12 +219,14 @@ templater.parse = function (templateStr) {
             offset.y = offsets[1];
             offset.z = offsets[2];
         } else if (line.startsWith("> base ")) { // Look for base (foundation layer) feature
-            var parts = line.substring(7).trim().split(" ");
-            base = { block: parts[0] };
-            for (var z = 1; z < parts.length; z++) {
-                var prop = parts[z].split(":");
-                base[prop[0]] = prop[1];
-            }
+            let { props } = templater.parseSetting(line);
+            base = props;
+        } else if (line.startsWith("> grid")) { // Look for grid settings (for macros only)
+            let { props } = templater.parseSetting(line);
+            grid = props;            
+        } else if (line.startsWith("> terrain")) { // Look for terrain settings (for macros only)
+            let { props } = templater.parseSetting(line);
+            terrain = props;
         }
     }
 
@@ -199,16 +242,34 @@ templater.parse = function (templateStr) {
         height,
         width,
         offset,
-        base
+        base,
+        grid,
+        terrain
     };
+};
+
+/**
+ * Parse a setting line from a template/macro
+ */
+templater.parseSetting = function (line) {
+    // remove "> "
+    line = line.substring(3).trim();
+    var parts = line.split(" ");
+    var command = parts[0];
+    var props = {};
+    parts.slice(1).forEach(function (part) {
+        var p = part.split(":");
+        props[p[0]] = p[1];
+    });
+    return { command, props };
 };
 
 /**
  * Fill the base (foundation layer) with specified block
  */
-templater.fillBase = function (template, position, direction) {  
+templater.fillBase = function (template, position, direction) {
     let { base, width, depth } = template;
-    let { x0, y0, z0 } = position;
+    let { x:x0, y:y0, z:z0 } = position;
     var margin = parseInt(base.margin || "0");
     switch (direction) {
         case "north":
@@ -254,19 +315,37 @@ templater.isAttachmentBlock = function (token) {
 };
 
 /**
- * Map the numeric direction from a sign to north/south/east/west text
+ * Determines direction of a placed sign
  */
-templater.directionTextOf = function (dir) {
-    if (dir < 4)
-        return "south";
-    else if (dir < 8)
-        return "west";
-    else if (dir < 12)
+templater.directionOfSign = function (sign) {
+    var groundSignDirection = sign.data.ground_sign_direction;
+    var facingDirection = sign.data.facing_direction;
+
+    if (typeof groundSignDirection === "number") {
+        if (groundSignDirection < 4)
+            return "south";
+        else if (groundSignDirection < 8)
+            return "west";
+        else if (groundSignDirection < 12)
+            return "north";
+        else if (groundSignDirection < 16)
+            return "east";
         return "north";
-    else if (dir < 16)
-        return "east";
+    } else if (typeof facingDirection === "number") {
+        switch (facingDirection) {
+            case 2:
+                return "north";
+            case 3:
+                return "south";
+            case 5:
+                return "east";
+            case 4:
+                return "west";
+        }
+    }
+
     return "north";
-}
+};
 
 /**
  * Apply an offset given the initial position and direction
