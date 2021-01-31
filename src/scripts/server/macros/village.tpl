@@ -10,7 +10,7 @@ o = cow_farm
 r = road
 p = patch west
 w = well
-_ = air
+_ = empty
    
    _ _ 3 _ _ _
    f _ w _ c _

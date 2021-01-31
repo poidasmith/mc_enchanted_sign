@@ -24,20 +24,29 @@ SOFTWARE.
 
 */
 
-let templater = {};
+let templater = {
+    templateCache: {}, // used to store parsed templates
+    macroCache: {} // used to store parsed macros
+};
 
 /**
  * Get the template for the given template name
  */
 templater.templateOf = function (templateName) {
-    return templater.parse(templates[templateName] || templates["help"]);
+    var template = templater.templateCache[template] || templater.parseTemplate(templates[templateName]);
+    if (typeof template === "object") {
+        templater.templateCache[templateName] = template;
+        return template;
+    }
+
+    return templater.parseTemplate(templates[templateName] || templates["help"]);
 };
 
 /**
  * Get the macro for the given macro name
  */
 templater.macroOf = function (macroName) {
-    return templater.parse(macros[macroName]);
+    return templater.parseTemplate(macros[macroName]);
 };
 
 /**
@@ -73,7 +82,7 @@ templater.macro = function (macroName, position, direction) {
  */
 templater.fillTemplate = function (template, position, direction) {
 
-    let { tokens, layers, depth, height, width, offset } = template;
+    let { tokens, layers, depth, height, width, offset, terrain } = template;
 
     // Calculate starting position and template size
     let updatedPosition = this.applyOffset(position, direction, offset);
@@ -138,33 +147,36 @@ templater.fillTemplate = function (template, position, direction) {
                             token = system.format("{0} {1}", token, templater.rotateVine(tileData, direction));
                     }
 
-                    // Calculate position of block and fill
+                    // Calculate position of block
+                    var y = y0 + j;
+                    var x, z;
                     switch (direction) {
                         case "north":
-                            var x = Math.floor(x0 + (width / 2) - k);
-                            var y = y0 + j;
-                            var z = z0 + depth - i;
-                            createFn(token, x, y, z);
+                            x = Math.floor(x0 + (width / 2) - k);
+                            z = z0 + depth - i;
                             break;
                         case "south":
-                            var x = Math.ceil(x0 - (width / 2) + k);
-                            var y = y0 + j;
-                            var z = z0 - depth + i;
-                            createFn(token, x, y, z);
+                            x = Math.ceil(x0 - (width / 2) + k);
+                            z = z0 - depth + i;
                             break;
                         case "east":
-                            var z = Math.ceil(z0 - (width / 2) + k);
-                            var y = y0 + j;
-                            var x = x0 - depth + i;
-                            createFn(token, x, y, z);
+                            z = Math.ceil(z0 - (width / 2) + k);
+                            x = x0 - depth + i;
                             break;
                         case "west":
-                            var z = Math.floor(z0 + (width / 2) - k);
-                            var y = y0 + j;
-                            var x = x0 + depth - i;
-                            createFn(token, x, y, z);
+                            z = Math.floor(z0 + (width / 2) - k);
+                            x = x0 + depth - i;
                             break;
                     }
+
+                    // Check for terrain, find the surface and adjust the y value for this layer
+                    if(terrain && terrain.follow === "true") {
+                        var surface = system.findTheSurface2(x, y, z);
+                        y = surface + j + offset.y;
+                    } 
+
+                    // Fill the block with the specified block type
+                    createFn(token, x, y, z);
                 }
             }
         }
@@ -174,15 +186,19 @@ templater.fillTemplate = function (template, position, direction) {
 /**
  * Loop through the grid and fill templates according to the macro grid
  */
-templater.fillMacro = function (template, position, direction) {
+templater.fillMacro = function (macro, position, direction) {
 
-    let { tokens, layers, offset, depth, height, width, grid, terrain } = template;
+    let { tokens, layers, offset, depth, height, width, grid, terrain } = macro;
 
     // Calculate starting position and template size
     let updatedPosition = this.applyOffset(position, direction, offset);
     let { x: x0, y: y0, z: z0 } = updatedPosition;
 
     var spacing = grid ? parseInt(grid.spacing || "10") : 10;
+    var dx = depth * spacing;
+    var wx = width * spacing;
+    var mid = Math.ceil(spacing / 2);
+    var x1 = x0 + wx / 2;
 
     for (var i = 0; i < depth; i++) {
         var ix = i * spacing;
@@ -204,32 +220,48 @@ templater.fillMacro = function (template, position, direction) {
                     templateDir = templater.rotateDirection(direction, tparts[1]);
                 }
 
+                // Get width, depth of template
+                var tokenTemplate = templater.templateOf(token);
+                var centerX = Math.floor((spacing - tokenTemplate.width) / 2); 
+                var centerZ = Math.floor((spacing - tokenTemplate.depth) / 2); 
+
                 // Calculate position of template
                 var templatePos = {};
                 switch (direction) {
                     case "north":
-                        templatePos.x = Math.floor(x0 + (width / 2) - kx);
+                        templatePos.x = x1 - mid - kx;
                         templatePos.y = y0 + j;
-                        templatePos.z = z0 + depth - ix;
+                        templatePos.z = z0 + dx - ix - spacing;
+                        switch (templateDir) {
+                            case "south":
+                                templatePos.z += spacing;
+                                break;
+                            case "east": 
+                                templatePos.x 
+                        }
                         break;
                     case "south":
-                        templatePos.x = Math.ceil(x0 - (width / 2) + kx);
+                        templatePos.x = x1 - mid - kx;
                         templatePos.y = y0 + j;
-                        templatePos.z = z0 - depth + ix;
+                        templatePos.z = z0 + dx - ix + spacing;
                         break;
                     case "east":
-                        templatePos.z = Math.ceil(z0 - (width / 2) + kx);
+                        templatePos.z = Math.ceil(z0 - (dw / 2) + kx);
                         templatePos.y = y0 + j;
                         templatePos.x = x0 - depth + ix;
                         break;
                     case "west":
-                        templatePos.z = Math.floor(z0 + (width / 2) - kx);
+                        templatePos.z = Math.floor(z0 + (dw / 2) - kx);
                         templatePos.y = y0 + j;
                         templatePos.x = x0 + depth - ix;
                         break;
                 };
 
                 // TODO: support for following terrain; find the surface for given templatePos and use that
+                if(terrain && terrain.follow === "true") {
+                    var surface = system.findTheSurface2(templatePos.x, templatePos.y, templatePos.z);
+                    templatePos.y = surface + j + offset.y;
+                }
 
                 // Fill the template for the given position and direction
                 templater.fill(token, templatePos, templateDir);
@@ -241,7 +273,10 @@ templater.fillMacro = function (template, position, direction) {
 /**
  * Parse a template string into tokens, layers and properties
  */
-templater.parse = function (templateStr) {
+templater.parseTemplate = function (templateStr) {
+
+    if (!templateStr)
+        return null;
 
     // Split the template into tokens and layers
     var tokens = {};

@@ -21,7 +21,17 @@ server = {
     },
     listenForEvent: function(type, cb) {
         
-    }
+    },
+    getComponent: function(entity, type) {
+        return {data:{ticking_area:{}}};
+    },
+    getBlock: function(tickingArea, position) {
+        if(position.y >= 70)
+            return { __identifier__: "minecraft:air"};
+        else 
+            return { __identifier__: "minecraft:dirt"};
+    },
+
 };
 
 const { system, templates, macros, templater } = require("../build/output/scripts/server/server");
@@ -41,6 +51,10 @@ templater.fillTemplate(well, origin, "south");
 console.log(templater.directionOfSign({data:{facing_direction:2}}));
 */
 
-console.log(templater.parse(macros.test1).layers[0][0]);
+console.log(templater.parseTemplate(macros.test1).layers[0][0]);
 
-system.build(origin, "north", "macro:test1");
+system.build("road", origin, "north");
+system.dequeue();
+system.dequeue();
+system.build("road", origin, "north");
+system.dequeue();

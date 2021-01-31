@@ -24,4 +24,5 @@ _ = air
    g r g   _ _ _ 
    g r g   _ _ _ 
 
-> offset 0 -1 0  
+> terrain follow:true 
+> offset 0 -1 0

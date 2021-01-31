@@ -118,7 +118,7 @@ function installToWorlds() {
     var stream = gulp.src("./build/output/**");
     worldsWithAddon.forEach(function(folder) {
         var worldName = fs.readFileSync(path.join(folder, "..", "..", "levelname.txt"), "utf8");
-        log("Updating local world", worldName);
+        log("Updating local world:", worldName);
         stream = stream.pipe(gulp.dest(folder));
     });
     return stream;
@@ -144,5 +144,5 @@ exports.test = gulp.series(exports.default, test);
 exports.package = gulp.series(makePack, installToLocalAddon, installToWorlds);
 exports.install = gulp.series(exports.test, exports.package);
 exports.worlds = installToWorlds;
-exports.watch = autoInstall;
+exports.watch = gulp.series(exports.install, autoInstall);
 exports.testWatch = autoTest;
